@@ -1,0 +1,39 @@
+/* Temel CSS Sıfırlaması */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica,
+    Arial, sans-serif;
+  line-height: 1.6;
+  background: #fff;
+  color: #333;
+  /* YENİ EKLENEN: Yatay taşmayı engeller */
+  overflow-x: hidden; 
+}
+
+/* App.vue düzeni */
+#app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh; 
+}
+
+main {
+  flex-grow: 1;
+  /* YENİ: Main'in genişliğinin taşmasını engeller */
+  width: 100%; 
+}
+
+/* Container sınıfın (Bunu silmiyoruz, diğer sayfalarda lazım olabilir) */
+.container {
+  width: 100%;
+  max-width: 1400px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+}
