@@ -4,9 +4,22 @@ import { useRouter } from 'vue-router'
 import { useNuxtApp } from '#app'
 // Batch write için gerekli importları ekledim
 import { collection, getDocs, writeBatch, doc } from 'firebase/firestore'
-import RecentlyViewed from '~/components/organisms/RecentlyViewed.vue'
 import { useCartStore } from '~/stores/cartStore'
+import { useWishlistStore } from '~/stores/wishlistStore'
 
+
+const wishlistStore = useWishlistStore()
+
+// Sayfa yüklendiğinde favorileri hafızadan geri getir:
+onMounted(() => {
+  wishlistStore.loadFromLocalStorage() // <-- Bunu ekle
+  fetchProducts()
+})
+
+// Kalp butonuna basınca çalışacak fonksiyon:
+const toggleWishlist = (product: any) => {
+  wishlistStore.toggleWishlist(product)
+}
 
 // --- 1. FIREBASE & ROUTER KURULUMU ---
 const router = useRouter()
@@ -112,118 +125,8 @@ const addToCart = (product: any, size: string) => {
   console.log(`${product.title} - ${size} sepete eklendi!`)
 }
 
-// ==========================================
-// --- ADMIN: TOPLU ÜRÜN EKLEME (GEÇİCİ) ---
-// ==========================================
 
-// Fotoğraftaki 8 Ürün Verisi
-const menBatchData = [
-  {
-    title: 'Critical Cut Off Tank',
-    price: 35,
-    color: 'Black',
-    fit: 'Slim Fit',
-    rating: 3.8,
-    image: 'RESIM_LINKI_1_ANA', // BURAYA RESİM LİNKİNİ YAPIŞTIR
-    imageHover: 'RESIM_LINKI_1_HOVER',
-    sizes: ['S', 'M', 'L', 'XL', 'XXL'],
-    tag: null
-  },
-  {
-    title: 'Critical Drop Arm Tank',
-    price: 26,
-    color: 'Black',
-    fit: 'Slim Fit',
-    rating: 3.3,
-    image: 'RESIM_LINKI_2_ANA', 
-    imageHover: 'RESIM_LINKI_2_HOVER',
-    sizes: ['XS', 'S', 'M', 'L', 'XL'],
-    tag: null
-  },
-  {
-    title: 'Legacy Drop Arm Tank',
-    price: 35,
-    color: 'Black',
-    fit: 'Slim Fit',
-    rating: 4.2,
-    image: 'RESIM_LINKI_3_ANA',
-    imageHover: 'RESIM_LINKI_3_HOVER',
-    sizes: ['S', 'M', 'L', 'XL'],
-    tag: null
-  },
-  {
-    title: 'Power T-Shirt',
-    price: 40,
-    color: 'Black/Asphalt Grey',
-    fit: 'Oversized Fit',
-    rating: 4.1,
-    image: 'RESIM_LINKI_4_ANA',
-    imageHover: 'RESIM_LINKI_4_HOVER',
-    sizes: ['S', 'M', 'L', 'XL', 'XXL'],
-    tag: null
-  },
-  {
-    title: 'Arrival Tank',
-    price: 25,
-    color: 'Green', // Fotoğraftaki yeşil
-    fit: 'Slim Fit',
-    rating: 4.3,
-    image: 'RESIM_LINKI_5_ANA',
-    imageHover: 'RESIM_LINKI_5_HOVER',
-    sizes: ['XS', 'S', 'M', 'L', 'XL'],
-    tag: null
-  },
-  {
-    title: 'Arrival Tank',
-    price: 25,
-    color: 'White',
-    fit: 'Slim Fit',
-    rating: 4.3,
-    image: 'RESIM_LINKI_6_ANA',
-    imageHover: 'RESIM_LINKI_6_HOVER',
-    sizes: ['S', 'M', 'L', 'XL'],
-    tag: null
-  },
-  {
-    title: 'Arrival T-Shirt',
-    price: 25,
-    color: 'Black',
-    fit: 'Slim Fit',
-    rating: 4.3,
-    image: 'RESIM_LINKI_7_ANA',
-    imageHover: 'RESIM_LINKI_7_HOVER',
-    sizes: ['S', 'M', 'L', 'XL', 'XXL'],
-    tag: null
-  },
-  {
-    title: 'Arrival T-Shirt',
-    price: 25,
-    color: 'White',
-    fit: 'Slim Fit',
-    rating: 4.1,
-    image: 'RESIM_LINKI_8_ANA',
-    imageHover: 'RESIM_LINKI_8_HOVER',
-    sizes: ['S', 'M', 'L', 'XL'],
-    tag: null
-  }
-]
 
-const seedMenProducts = async () => {
-  if (!confirm('8 Adet Erkek Ürünü menproducts tablosuna eklenecek. Emin misin?')) return
-  try {
-    const batch = writeBatch($db as any)
-    menBatchData.forEach((product) => {
-      const docRef = doc(collection($db as any, 'menproducts'))
-      batch.set(docRef, product)
-    })
-    await batch.commit()
-    alert('✅ Başarılı! 8 Ürün eklendi. Sayfayı yenile.')
-    fetchProducts()
-  } catch (error) {
-    console.error(error)
-    alert('Hata oluştu, konsola bak.')
-  }
-}
 </script>
 
 <template>
@@ -231,15 +134,7 @@ const seedMenProducts = async () => {
     
     <main class="main-content">
 
-      <div style="background: #f8f8f8; padding: 15px; text-align: center; border-bottom: 1px solid #ddd;">
-        <p style="color: #666; margin-bottom: 10px; font-size: 0.9rem;">(Bu buton sadece admin içindir. Ürünleri ekledikten sonra kodu sil.)</p>
-        <button 
-          @click="seedMenProducts" 
-          style="background: #d32f2f; color: white; padding: 12px 24px; font-weight: bold; cursor: pointer; border: none; border-radius: 4px;"
-        >
-          DATABASE'E 8 ERKEK ÜRÜNÜ EKLE
-        </button>
-      </div>
+
       <section class="collection-header">
         <div class="header-text">
           <span class="breadcrumb-text">{{ pageInfo.breadcrumb }}</span>
@@ -417,9 +312,18 @@ const seedMenProducts = async () => {
               @click="goToProduct(product.id)"
             >
               <div class="prod-image-wrapper">
-                <button class="wishlist-icon" @click.stop>
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" /></svg>
-                </button>
+<button 
+  class="wishlist-icon" 
+  @click.stop="toggleWishlist(product)"
+>
+  <svg v-if="wishlistStore.isInWishlist(product.id)" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="red" class="w-6 h-6" style="width: 20px; height: 20px;">
+    <path d="M11.645 20.91l-.007-.003-.022-.012a15.247 15.247 0 01-.383-.218 25.18 25.18 0 01-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0112 5.052 5.5 5.5 0 0116.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 01-4.244 3.17 15.247 15.247 0 01-.383.219l-.022.012-.007.004-.003.001a.752.752 0 01-.704 0l-.003-.001z" />
+  </svg>
+  
+  <svg v-else xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+    <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
+  </svg>
+</button>
                 <span v-if="product.tag" class="prod-tag">{{ product.tag.text }}</span>
                 
                 <img :src="product.image" :alt="product.title" class="prod-img img-main" />

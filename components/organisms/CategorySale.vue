@@ -1,32 +1,91 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
+import { useNuxtApp } from '#app'
+import { collection, getDocs, limit, query } from 'firebase/firestore'
 
-const categories = ref([
+// --- TİP TANIMLAMASI (Hataları önlemek için) ---
+interface CategoryItem {
+  id: number;
+  title: string;
+  subtitle: string;
+  badge: string;
+  link: string;
+  imageUrl: string;
+}
+
+const { $db } = useNuxtApp()
+
+// --- KATEGORİ VERİLERİ (BAŞLANGIÇ) ---
+const categories = ref<CategoryItem[]>([
   {
     id: 1,
     title: "WOMEN'S SALE",
     subtitle: 'UP TO 50% OFF',
     badge: 'BLACK FRIDAY',
-    // Kadın sporcu resmi
-    imageUrl: 'https://picsum.photos/id/338/600/800' 
+    link: '/collections/womens-products',
+    imageUrl: 'https://via.placeholder.com/600x800' // DB'den güncellenecek
   },
   {
     id: 2,
     title: "MEN'S SALE",
     subtitle: 'UP TO 50% OFF',
     badge: 'BLACK FRIDAY',
-    // Erkek sporcu resmi
-    imageUrl: 'https://picsum.photos/id/339/600/800' 
+    link: '/collections/mens-products',
+    imageUrl: 'https://via.placeholder.com/600x800' // DB'den güncellenecek
   },
   {
     id: 3,
     title: 'ACCESSORIES SALE',
     subtitle: 'UP TO 50% OFF',
     badge: 'BLACK FRIDAY',
-    // Aksesuar/Ekipman resmi
-    imageUrl: 'https://picsum.photos/id/340/600/800' 
+    link: '/collections/mens-products', 
+    // --- BURAYA ELLE FOTOĞRAF GİR (3. KUTU) ---
+    imageUrl: '/images/bottle01.webp' 
   }
 ])
+
+// --- RESİMLERİ VERİTABANINDAN ÇEKME ---
+const fetchCategoryImages = async () => {
+  try {
+    // Sorguları hazırla
+    const womenQuery = query(collection($db as any, 'products'), limit(1))
+    const menQuery = query(collection($db as any, 'menproducts'), limit(1))
+
+    // Verileri çek
+    const [womenSnap, menSnap] = await Promise.all([
+      getDocs(womenQuery),
+      getDocs(menQuery)
+    ])
+
+    // 1. KUTU (KADIN) GÜNCELLEME
+    // 'womenSnap.empty' kontrolü yeterlidir, snap undefined gelmez
+    if (!womenSnap.empty) {
+      const docData = womenSnap.docs[0].data()
+      const img = docData.imageUrl || docData.image
+      if (img && categories.value[0]) {
+        categories.value[0].imageUrl = img
+      }
+    }
+
+    // 2. KUTU (ERKEK) GÜNCELLEME
+    if (!menSnap.empty) {
+      const docData = menSnap.docs[0].data()
+      const img = docData.imageUrl || docData.image
+      if (img && categories.value[1]) {
+        categories.value[1].imageUrl = img
+      }
+    }
+
+    // 3. KUTU zaten yukarıda elle girildi, dokunmuyoruz.
+
+  } catch (error) {
+    console.error("Kategori resimleri çekilemedi:", error)
+  }
+}
+
+onMounted(() => {
+  fetchCategoryImages()
+})
 </script>
 
 <template>
@@ -37,7 +96,7 @@ const categories = ref([
         <NuxtLink 
           v-for="item in categories" 
           :key="item.id" 
-          to="#" 
+          :to="item.link" 
           class="category-card"
         >
           <div class="image-wrapper">
@@ -58,7 +117,6 @@ const categories = ref([
 
 <style scoped>
 .category-sale {
-  /* Diğer bölümlerle tutarlı boşluk */
   padding-top: 50px;
   padding-bottom: 3rem;
   width: 100%;
@@ -66,16 +124,14 @@ const categories = ref([
 
 .container {
   width: 100%;
-  max-width: 1800px;
+  max-width: 1700px;
   margin: 0 auto;
-  /* Senin standart padding ayarların */
   padding-left: 40px;
   padding-right: 40px;
 }
 
 .grid {
   display: grid;
-  /* 3 Eşit Sütun */
   grid-template-columns: repeat(3, 1fr);
   gap: 15px;
 }
@@ -91,7 +147,6 @@ const categories = ref([
 .image-wrapper {
   position: relative;
   width: 100%;
-  /* Kareye yakın ama hafif dikey dikdörtgen */
   padding-bottom: 110%; 
   background-color: #f5f5f5;
   overflow: hidden;
@@ -112,13 +167,12 @@ const categories = ref([
   transform: scale(1.05);
 }
 
-/* Turkuaz Şerit */
 .top-badge {
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
-  background-color: #56F5F5; /* Gymshark Turkuazı */
+  background-color: #56F5F5;
   color: #000;
   font-weight: 800;
   font-size: 1rem;
@@ -128,7 +182,6 @@ const categories = ref([
   line-height: 1;
 }
 
-/* Yazı Alanı */
 .card-info {
   text-align: left;
 }
@@ -144,7 +197,7 @@ const categories = ref([
 
 .title {
   font-size: 1.2rem;
-  font-weight: 800; /* Kalın */
+  font-weight: 800;
   text-transform: uppercase;
   margin: 0;
   color: #000;
@@ -153,7 +206,7 @@ const categories = ref([
 /* Mobil */
 @media (max-width: 768px) {
   .grid {
-    grid-template-columns: 1fr; /* Mobilde alt alta */
+    grid-template-columns: 1fr;
   }
   .container {
     padding-left: 15px;

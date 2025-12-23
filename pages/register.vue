@@ -1,8 +1,17 @@
 <script setup lang="ts">
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { useAuthStore } from '~/stores/authStore'
+import type { IAuthCredentials } from '~/types'
+
 // Header ve Footer'ı gizlemek için 'auth' düzenini kullanıyoruz
 definePageMeta({
   layout: 'auth'
 })
+
+// Store ve Router kurulumu
+const authStore = useAuthStore()
+const router = useRouter()
 
 // Form verileri
 const firstName = ref('')
@@ -14,8 +23,22 @@ const isPasswordVisible = ref(false)
 const agreedToEmails = ref(false)
 
 // Kayıt işlemi fonksiyonu
-const handleRegister = () => {
-  console.log('Register attempt:', firstName.value, email.value)
+const handleRegister = async () => {
+  // Store'un beklediği formatta veriyi hazırla
+  const payload: IAuthCredentials = {
+    email: email.value,
+    password: password.value,
+    firstName: firstName.value,
+    lastName: lastName.value
+  }
+
+  // Store action'ını çağır
+  const success = await authStore.registerUser(payload)
+
+  // Başarılıysa ana sayfaya yönlendir
+  if (success) {
+    router.push('/')
+  }
 }
 </script>
 
@@ -24,7 +47,7 @@ const handleRegister = () => {
     <div class="login-box">
       
         <div class="logo-container">
-            <img src="/images/logo.png" alt="Gymshark Logo" class="site-logo" />
+            <img src="../../images/logo.png" alt="Gymshark Logo" class="site-logo" />
         </div>
       
       <h1 class="title">GYMSHARK SIGNUP</h1>
@@ -38,12 +61,12 @@ const handleRegister = () => {
         
         <div class="input-group">
           <label for="firstName">First Name</label>
-          <input type="text" id="firstName" v-model="firstName" />
+          <input type="text" id="firstName" v-model="firstName" required />
         </div>
 
         <div class="input-group">
           <label for="lastName">Last Name</label>
-          <input type="text" id="lastName" v-model="lastName" />
+          <input type="text" id="lastName" v-model="lastName" required />
         </div>
 
         <div class="input-group">
@@ -83,8 +106,12 @@ const handleRegister = () => {
           </label>
         </div>
 
-        <button type="submit" class="btn btn-primary">
-          CREATE ACCOUNT
+        <div v-if="authStore.error" class="error-text">
+          {{ authStore.error }}
+        </div>
+
+        <button type="submit" class="btn btn-primary" :disabled="authStore.loading">
+          {{ authStore.loading ? 'CREATING...' : 'CREATE ACCOUNT' }}
         </button>
 
       </form>
@@ -106,7 +133,6 @@ const handleRegister = () => {
   justify-content: center;
   min-height: 100vh;
   width: 100%;
-  background-color: #ffffff;
   padding: 2rem 1.5rem;
   font-family: Arial, sans-serif;
 }
@@ -120,8 +146,6 @@ const handleRegister = () => {
   text-align: center;
 }
 
-
-
 .logo-container {
   margin-bottom: 1.5rem;
   display: flex;
@@ -129,12 +153,9 @@ const handleRegister = () => {
 }
 
 .site-logo {
-
   width: 60px; 
   height: auto;
   object-fit: contain;
-  
- 
 }
 
 .title {
@@ -244,6 +265,20 @@ const handleRegister = () => {
 }
 .btn-primary:hover {
   background-color: #333;
+}
+/* Buton disable olduğunda (yüklenirken) */
+.btn-primary:disabled {
+  background-color: #777;
+  cursor: not-allowed;
+}
+
+/* Hata mesajı stili */
+.error-text {
+  color: #d32f2f;
+  font-size: 0.85rem;
+  margin-bottom: 15px;
+  text-align: left;
+  font-weight: 600;
 }
 
 /* LoginView ile aynı alt link stili */

@@ -9,7 +9,7 @@
       <h3>WORKOUT CLOTHES BUILT IN THE WEIGHT ROOM</h3>
       <p>
         Our legacy was built in the weight room. Gymshark was founded with a love for training and that passion continues into all our workout clothes today. You'll find the latest innovation in women's gym clothing and accessories to help you perform at your best and recover in style. With sophisticated seamless technology, clever contouring, and durable, quick-dry sweat-wicking fabrics, whether you're wearing 
-        <NuxtLink to="#">leggings</NuxtLink> or <NuxtLink to="#">sports bras</NuxtLink>, 
+        <NuxtLink to="/collections/womens-products">leggings</NuxtLink> or <NuxtLink to="/collections/womens-products">sports bras</NuxtLink>, 
         you will always feel comfortable, supported and confident in every workout.
       </p>
       

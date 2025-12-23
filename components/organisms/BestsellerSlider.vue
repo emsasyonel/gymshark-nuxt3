@@ -6,6 +6,7 @@ import { useAppRouter } from '~/composables/useAppRouter';
 // Store'lar
 import { useProductStore } from '~/stores/productStore';
 import { useCartStore } from '~/stores/cartStore';
+import { useWishlistStore } from '~/stores/wishlistStore'; // <-- YENİ EKLENDİ
 
 // Bileşenler
 import CartSidebar from '~/components/organisms/CartSidebar.vue';
@@ -14,18 +15,25 @@ import CartSidebar from '~/components/organisms/CartSidebar.vue';
 const appRouter = useAppRouter();
 const productStore = useProductStore();
 const cartStore = useCartStore();
+const wishlistStore = useWishlistStore(); // <-- YENİ EKLENDİ
 
 // Verileri Reaktif Alma
 const { products, loading } = storeToRefs(productStore);
 
-// Sayfa Yüklendiğinde Ürünleri Çek
+// Sayfa Yüklendiğinde Ürünleri ve Favorileri Çek
 onMounted(() => {
   productStore.fetchProducts();
+  wishlistStore.loadFromLocalStorage(); // <-- YENİ EKLENDİ (Hafızadan geri yükle)
 });
 
 // Sepete Ekleme Fonksiyonu
 const handleAddToCart = (product: any, size: string) => {
   cartStore.addToCart(product, size);
+};
+
+// Favorilere Ekleme/Çıkarma Fonksiyonu <-- YENİ EKLENDİ
+const toggleWishlist = (product: any) => {
+  wishlistStore.toggleWishlist(product);
 };
 
 // Slider Scroll İşlemleri
@@ -69,8 +77,12 @@ const scrollRight = () => carouselViewport.value?.scrollBy({ left: 320, behavior
             <div class="image-wrapper">
               <div v-if="product.tag" class="tag-badge">{{ product.tag }}</div>
               
-              <button class="wishlist-btn" @click.stop>
-                <i class="bi bi-heart"></i>
+              <button class="wishlist-btn" @click.stop="toggleWishlist(product)">
+                <i 
+                  class="bi" 
+                  :class="wishlistStore.isInWishlist(product.id) ? 'bi-heart-fill text-danger' : 'bi-heart'"
+                  :style="{ color: wishlistStore.isInWishlist(product.id) ? 'red' : 'inherit' }"
+                ></i>
               </button>
 
               <img :src="product.image" class="img-main" :alt="product.name" />
@@ -183,7 +195,5 @@ const scrollRight = () => carouselViewport.value?.scrollBy({ left: 320, behavior
   .product-card { min-width: 180px; width: 45%; }
   .carousel-container-override { padding: 0 20px; }
   .nav-arrow { display: none; } /* Mobilde okları gizle */
-  /* Mobilde beden butonlarını gizleyip sadece detayda göstermek istersen: */
-  /* .size-row { display: none; } */
 }
 </style>

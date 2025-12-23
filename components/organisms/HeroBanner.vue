@@ -14,8 +14,8 @@ const heroImageUrl = '/images/image.avif'
       </h2>
       
       <div class="hero-actions">
-        <NuxtLink to="#" class="hero-link-btn">Shop Women's</NuxtLink>
-        <NuxtLink to="#" class="hero-link-btn">Shop Men's</NuxtLink>
+        <NuxtLink to="/collections/womens-products" class="hero-link-btn">Shop Women's</NuxtLink>
+        <NuxtLink to="/collections/mens-products" class="hero-link-btn">Shop Men's</NuxtLink>
       </div>
     </div>
   </section>

@@ -1,10 +1,27 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import { useSubscriberStore } from '~/stores/subscriberStore' // Store'u çağırıyoruz
 
 // Alt bileşenler
 import SubFooter from '../molecules/SubFooter.vue'
 import FooterLinkColumn from '../molecules/FooterLinkColumn.vue'
-// MoreAboutCard'ı artık kullanmıyoruz, silebilirsin veya yorum satırı yapabilirsin.
+
+// --- STORE KURULUMU ---
+const subscriberStore = useSubscriberStore()
+const emailInput = ref('')
+
+// --- ABONELİK FONKSİYONU ---
+const handleSubscribe = async () => {
+  await subscriberStore.subscribeUser(emailInput.value)
+  
+  // Başarılı olursa inputu temizle ve 3 sn sonra eski haline döndür
+  if (subscriberStore.success) {
+    emailInput.value = ''
+    setTimeout(() => {
+      subscriberStore.resetState()
+    }, 3000)
+  }
+}
 
 // --- DATA ---
 const helpLinks = ref([
@@ -17,22 +34,17 @@ const helpLinks = ref([
 ])
 
 const accountLinks = ref([
-  { text: 'Login', href: '#' },
-  { text: 'Register', href: '#' },
+  { text: 'Login', href: '/login' },
+  { text: 'Register', href: '/register' },
 ])
 
 const pagesLinks = ref([
   { text: 'Stores', href: '#' },
   { text: 'Refer A Friend', href: '#' },
-  { text: 'Gymshark Central', href: '#' },
   { text: 'Gymshark Loyalty', href: '#' },
   { text: 'About Us', href: '#' },
   { text: 'Careers', href: '#' },
   { text: 'Student Discount', href: '#' },
-  { text: 'Training App', href: '#' },
-  { text: 'Military Discount', href: '#' },
-  { text: 'Accessibility Statement', href: '#' },
-  { text: 'Factory List', href: '#' },
   { text: 'Sustainability', href: '#' },
 ])
 </script>
@@ -73,14 +85,44 @@ const pagesLinks = ref([
                 <div class="card-bottom">15% STUDENT DISCOUNT</div>
               </a>
 
-              <a href="#" class="gymshark-card">
-                <div class="card-top">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" class="bi bi-envelope" viewBox="0 0 16 16">
-                    <path d="M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V4Zm2-1a1 1 0 0 0-1 1v.217l7 4.2 7-4.2V4a1 1 0 0 0-1-1H2Zm13 2.383-4.708 2.825L15 11.105V5.383Zm-.034 6.876-5.64-3.471L8 9.583l-1.326-.795-5.64 3.47A1 1 0 0 0 2 13h12a1 1 0 0 0 .966-.741ZM1 11.105l4.708-2.897L1 5.383v5.722Z"/>
-                  </svg>
+              <div class="gymshark-card newsletter-card">
+                
+                <div class="card-top form-container">
+                  
+                  <div v-if="subscriberStore.success" class="success-state">
+                    <i class="bi bi-check-circle-fill success-icon"></i>
+                    <span>SIGNED UP!</span>
+                  </div>
+
+                  <form v-else @submit.prevent="handleSubscribe" class="mini-form">
+                    <div class="input-wrapper">
+                      <svg v-if="!subscriberStore.loading" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="#999" class="bi bi-envelope input-icon" viewBox="0 0 16 16">
+                        <path d="M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V4Zm2-1a1 1 0 0 0-1 1v.217l7 4.2 7-4.2V4a1 1 0 0 0-1-1H2Zm13 2.383-4.708 2.825L15 11.105V5.383Zm-.034 6.876-5.64-3.471L8 9.583l-1.326-.795-5.64 3.47A1 1 0 0 0 2 13h12a1 1 0 0 0 .966-.741ZM1 11.105l4.708-2.897L1 5.383v5.722Z"/>
+                      </svg>
+                      
+                      <input 
+                        type="email" 
+                        v-model="emailInput" 
+                        placeholder="Email..." 
+                        required
+                        :disabled="subscriberStore.loading"
+                      />
+                      
+                      <button type="submit" class="arrow-btn" :disabled="subscriberStore.loading">
+                        <span v-if="subscriberStore.loading">...</span>
+                        <i v-else class="bi bi-arrow-right"></i>
+                      </button>
+                    </div>
+                    <div v-if="subscriberStore.error" class="mini-error">{{ subscriberStore.error }}</div>
+                  </form>
+
                 </div>
-                <div class="card-bottom">EMAIL SIGN UP</div>
-              </a>
+
+                <div class="card-bottom">
+                  {{ subscriberStore.success ? 'THANKS FOR JOINING' : 'EMAIL SIGN UP' }}
+                </div>
+
+              </div>
 
             </div>
           </div>
@@ -120,14 +162,13 @@ const pagesLinks = ref([
 }
 .footer-container {
   width: 100%;
-  max-width: 1600px; /* Geniş ekranlara uyum için 1600-1800 arası ideal */
+  max-width: 1600px; 
   margin: 0 auto;
   padding: 0 30px;
 }
 
 .footer-grid {
   display: grid;
-  /* Kolon genişlikleri: Linkler dar, 'More About' kısmı geniş */
   grid-template-columns: 0.5fr 0.5fr 1fr 1.5fr;
   gap: 2rem;
   margin-bottom: 4rem;
@@ -135,41 +176,43 @@ const pagesLinks = ref([
 
 .column-title {
   font-size: 0.95rem;
-  font-weight: 800; /* Daha kalın font */
+  font-weight: 800; 
   color: #000;
   margin: 0 0 1.5rem 0;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
-/* --- YENİ EKLENEN KART STİLLERİ (MORE ABOUT) --- */
+/* --- KART STİLLERİ --- */
 .more-blocks {
   display: grid;
-  grid-template-columns: repeat(3, 1fr); /* 3 eşit parça */
-  gap: 15px; /* Kartlar arası boşluk */
+  grid-template-columns: repeat(3, 1fr); 
+  gap: 15px; 
 }
 
 .gymshark-card {
   display: flex;
   flex-direction: column;
   text-decoration: none;
-  height: 160px; /* Kartların sabit yüksekliği */
+  height: 160px; 
   transition: transform 0.2s;
+  cursor: pointer;
 }
 
 .gymshark-card:hover {
-  transform: translateY(-3px); /* Hover efekti */
+  transform: translateY(-3px); 
 }
 
 /* KARTIN ÜST KISMI (SİYAH) */
 .card-top {
   background-color: #000;
   color: #fff;
-  flex: 1; /* Alanı kapla */
+  flex: 1; 
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 10px;
+  position: relative;
 }
 
 .logo-text {
@@ -184,14 +227,84 @@ const pagesLinks = ref([
 
 /* KARTIN ALT KISMI (GRİ ŞERİT) */
 .card-bottom {
-  background-color: #e6e6e6; /* Gymshark gri tonu */
+  background-color: #e6e6e6; 
   color: #000;
   font-size: 0.75rem;
   font-weight: 800;
   text-transform: uppercase;
   padding: 12px 15px;
-  /* Alt kısımda yazı solda mı ortada mı? Fotoğrafta solda gibi duruyor */
   text-align: left; 
+}
+
+/* --- YENİ EKLENEN FORM STİLLERİ (3. KART İÇİN) --- */
+.form-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.mini-form {
+  width: 100%;
+  padding: 0 10px;
+}
+
+.input-wrapper {
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid #666; /* Alt çizgi */
+  padding-bottom: 5px;
+}
+
+.input-icon {
+  margin-right: 8px;
+}
+
+.mini-form input {
+  background: transparent;
+  border: none;
+  color: #fff;
+  width: 100%;
+  font-size: 0.8rem;
+  outline: none;
+}
+.mini-form input::placeholder {
+  color: #999;
+}
+
+.arrow-btn {
+  background: none;
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  font-size: 1.2rem;
+  padding: 0;
+  margin-left: 5px;
+  transition: transform 0.2s;
+}
+.arrow-btn:hover {
+  transform: translateX(3px);
+  color: #56F5F5; /* Gymshark turkuazı */
+}
+
+.mini-error {
+  color: #ff4d4d;
+  font-size: 0.6rem;
+  margin-top: 5px;
+  position: absolute;
+  bottom: 5px;
+  left: 10px;
+}
+
+/* Başarılı Durum */
+.success-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  color: #56F5F5; /* Turkuaz */
+}
+.success-icon {
+  font-size: 1.5rem;
 }
 
 /* --- FOOTER ALT KISIM (ICONS) --- */
@@ -200,7 +313,6 @@ const pagesLinks = ref([
   justify-content: space-between;
   align-items: center;
   padding-top: 2rem;
-  /* Çizgi yoktu fotoğrafta ama istenirse border-top eklenebilir */
 }
 .payment-icons {
   display: flex;
@@ -208,7 +320,7 @@ const pagesLinks = ref([
   align-items: center;
 }
 .payment-icons img {
-  height: 22px; /* İkonlar biraz daha kibar */
+  height: 22px; 
 }
 .social-icons {
   display: flex;
@@ -227,10 +339,10 @@ const pagesLinks = ref([
 /* --- RESPONSIVE --- */
 @media (max-width: 1024px) {
   .footer-grid {
-    grid-template-columns: repeat(2, 1fr); /* Tablette 2 kolon */
+    grid-template-columns: repeat(2, 1fr); 
   }
   .more-about-column {
-    grid-column: span 2; /* More about tam genişlik */
+    grid-column: span 2; 
     margin-top: 20px;
   }
 }
@@ -238,10 +350,10 @@ const pagesLinks = ref([
 @media (max-width: 600px) {
   .footer-grid {
     display: flex;
-    flex-direction: column; /* Mobilde alt alta */
+    flex-direction: column; 
   }
   .more-blocks {
-    grid-template-columns: 1fr; /* Kartlar alt alta */
+    grid-template-columns: 1fr; 
   }
   .footer-bottom {
     flex-direction: column;

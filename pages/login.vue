@@ -1,15 +1,33 @@
 <script setup lang="ts">
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { useAuthStore } from '~/stores/authStore'
 
 definePageMeta({
   layout: 'auth'
 })
-const email = ref('emsasyone@gmail.com')
+
+// Store ve Router Kurulumu
+const authStore = useAuthStore()
+const router = useRouter()
+
+// Form Verileri
+const email = ref('')
 const password = ref('') 
 const isPasswordVisible = ref(false)
 
-// Giriş işlemi fonksiyonu (İleride backend'e bağlanacak)
-const handleLogin = () => {
-  console.log('Login attempt:', email.value, password.value)
+// Giriş işlemi fonksiyonu
+const handleLogin = async () => {
+  // Store action'ını çağırıyoruz
+  const success = await authStore.loginUser({
+    email: email.value,
+    password: password.value
+  })
+
+  // Başarılıysa ana sayfaya git
+  if (success) {
+    router.push('/')
+  }
 }
 </script>
 
@@ -18,7 +36,7 @@ const handleLogin = () => {
     <div class="login-box">
       
         <div class="logo-container">
-            <img src="/images/logo.png" alt="Gymshark Logo" class="site-logo" />
+            <img src="../../images/logo.png" alt="Gymshark Logo" class="site-logo" />
         </div>
       
       <h1 class="title">GYMSHARK LOGIN</h1>
@@ -61,8 +79,12 @@ const handleLogin = () => {
 
         <NuxtLink to="#" class="forgot-password">Forgot password?</NuxtLink>
 
-        <button type="submit" class="btn btn-primary">
-          LOG IN
+        <div v-if="authStore.error" class="error-text">
+          {{ authStore.error }}
+        </div>
+
+        <button type="submit" class="btn btn-primary" :disabled="authStore.loading">
+          {{ authStore.loading ? 'LOGGING IN...' : 'LOG IN' }}
         </button>
 
       </form>
@@ -82,16 +104,15 @@ const handleLogin = () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 80vh; /* Header/Footer olduğu için 100vh bazen taşabilir, 80-90vh ideal */
+  min-height: 80vh; 
   width: 100%;
-  background-color: #ffffff;
   padding: 2rem 1.5rem;
   font-family: Arial, sans-serif;
 }
 
 .login-box {
   width: 100%;
-  max-width: 400px; /* Biraz genişlettim, Gymshark login genelde geniştir */
+  max-width: 400px; 
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -105,17 +126,14 @@ const handleLogin = () => {
 }
 
 .site-logo {
-
   width: 60px; 
   height: auto;
   object-fit: contain;
-  
- 
 }
 
 .title {
-  font-size: 1.5rem; /* Biraz büyüttüm */
-  font-weight: 800; /* Daha kalın */
+  font-size: 1.5rem; 
+  font-weight: 800; 
   text-transform: uppercase;
   margin-bottom: 0.5rem;
   color: #000;
@@ -147,7 +165,7 @@ const handleLogin = () => {
   left: 12px;
   font-size: 0.75rem; 
   color: #767676;
-  pointer-events: none; /* Tıklamayı inputa geçirir */
+  pointer-events: none; 
 }
 
 .input-group input {
@@ -185,7 +203,6 @@ const handleLogin = () => {
   align-self: flex-start; 
 }
 
-
 .btn-primary {
   background-color: #000;
   color: #fff;
@@ -195,14 +212,30 @@ const handleLogin = () => {
   text-transform: uppercase;
   font-size: 1rem;
   border: none;
-  border-radius: 30px; /* Daha oval */
+  border-radius: 30px; 
   cursor: pointer;
   transition: all 0.3s ease;
   width: 100%; 
 }
 .btn-primary:hover {
   background-color: #333;
-  transform: scale(1.02); /* Hafif büyüme efekti */
+  transform: scale(1.02); 
+}
+
+/* Disabled durumu için stil */
+.btn-primary:disabled {
+  background-color: #777;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Hata mesajı stili */
+.error-text {
+  color: #d32f2f;
+  font-size: 0.85rem;
+  margin-bottom: 15px;
+  text-align: left;
+  font-weight: 600;
 }
 
 .signup-link {

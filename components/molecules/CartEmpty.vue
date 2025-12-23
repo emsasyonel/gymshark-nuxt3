@@ -14,8 +14,8 @@ const uiStore = useUiStore()
     <p class="empty-subtitle">There are no products in your bag</p>
     
     <div class="empty-actions">
-      <CartButton to="/men" text="SHOP MENS" @click="uiStore.closeCart" />
-      <CartButton to="/women" text="SHOP WOMENS" @click="uiStore.closeCart" />
+      <CartButton to="/collections/mens-products" text="SHOP MENS" @click="uiStore.closeCart" />
+      <CartButton to="/collections/womens-products" text="SHOP WOMENS" @click="uiStore.closeCart" />
     </div>
   </div>
 </template>

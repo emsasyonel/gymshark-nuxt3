@@ -61,3 +61,29 @@ export interface IProduct {
   tag?: string;
   rating?: number;
 }
+
+// Kullanıcı Veri Modeli
+export interface IUser {
+  uid: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  createdAt: Date;
+}
+
+// Login/Register Formu için (Opsiyonel ama clean code için iyi)
+export interface IAuthCredentials {
+  email: string;
+  password: string;
+  firstName?: string; // Sadece register'da lazım
+  lastName?: string;  // Sadece register'da lazım
+}
+
+
+// ... Mevcut kodların altına ekle:
+
+// Bülten Aboneliği Veri Modeli
+export interface ISubscriber {
+  email: string;
+  signedUpAt: Date;
+}
